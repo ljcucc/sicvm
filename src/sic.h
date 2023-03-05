@@ -12,7 +12,13 @@ typedef unsigned int Uint32;
 
 typedef struct Sic {
   Uint8 *ram;
+  Uint16 pc;
 } Sic;
 
-int sic_init(Sic *s, Uint8 *ram);
-int sic_eval(Sic *s, Uint16 pc);
+/* function that required to define for using sic vm */
+
+extern Uint8 sic_dei (Uint8 id);
+extern void sic_deo (Uint8 id, Uint8 val);
+
+int sic_init(Sic *s, Uint8 *ram, Uint16 pc);
+int sic_eval(Sic *s);

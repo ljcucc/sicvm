@@ -1,5 +1,5 @@
 CC=gcc-12
-C_FLAGS= -std=c89 
+C_FLAGS= -std=c99 
 MAIN=sicemu
 TEST_ARGS=./test.rom
 
