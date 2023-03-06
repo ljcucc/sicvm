@@ -8,10 +8,6 @@
 
 #define M24 0x00FFFFFF
 
-#define ST(addr, val) { for(a=val, i=3; i--; s->ram[addr+i]=0xFF&a,a>>=8); }
-#define LD(addr)      ({ for(a=0, i=3; i--; a=(s->ram[addr+i] << (i<<3))); a;})
-#define opseek (disp & 1<<0xF)?LD(disp+RX):LD(disp)
-
 #define RA rs[0]
 #define RX rs[1]
 #define RL rs[2]
@@ -20,6 +16,11 @@
 #define SW_EQL (1<<3)
 #define SW_GTH (1<<1)
 #define SW_LTH (1<<2)
+
+#define ST(addr, val) { for(a=val, i=3; i--; s->ram[addr+i]=0xFF&a,a>>=8); }
+#define LD(addr)      ({ for(a=0, i=3; i--; a=(s->ram[addr+i] << (i<<3))); a;})
+#define opseek (disp & 1<<0xF)?LD(disp+RX):LD(disp)
+#define COMP(r)    a=opseek; RSW=(a>r&SW_GTH)|(a<r&SW_LTH)|(a==r&SW_EQL);  
 
 int sic_eval(Sic *s)
 {
@@ -57,8 +58,8 @@ int sic_eval(Sic *s)
     case 0x20: /* MUL */ RA *= opseek; RA&=M24; break;
     case 0x24: /* DIV */ RA /= opseek; RA&=M24; break;
 
-    case 0x28: /* COMP */ a=opseek; RSW=(a>RA&SW_GTH)|(a<RA&SW_LTH)|(a==RA&SW_EQL); break;
-    case 0x2C: /* TIX */ break;
+    case 0x28: /* COMP */ COMP(RA); break;
+    case 0x2C: /* TIX */ ++RX; COMP(RX); break;
 
     case 0x30: /*JEQ*/ if(RSW & SW_EQL) pc=disp; continue;
     case 0x34: /*JGT*/ if(RSW & SW_GTH) pc=disp; continue;
@@ -74,7 +75,7 @@ int sic_eval(Sic *s)
     case 0x50: /* LDCH */ RA=(s->ram[disp]<<16)|(RA&0x0000FFFF);/*mask-out third byte*/ break;
     case 0x54: /* STCH */ s->ram[disp]=(RA&0x00FF0000)>>16; break;
 
-    case 0xD8: /* RD */ break;
+    case 0xD8: /* RD */ RA=sic_dei(0x00FF&disp)<<16; break;
     case 0xDC: /* WD */ sic_deo(0x00FF&disp, (RA&0x00FF0000)>>16); break;
     case 0xE0: /* TD */ RSW|=SW_EQL; /*always allow test device*/ break;
     case 0xE8: /* STSW */ break;

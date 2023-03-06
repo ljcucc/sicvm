@@ -1,10 +1,10 @@
 CC=gcc-12
 C_FLAGS= -std=c99 
 MAIN=sicemu
-TEST_ARGS=./test.rom
+TEST_ARGS=bin/test.rom
 
 reset:
-	rm -rf ./bin
+	rm -rf ./bin/$(MAIN)
 	mkdir -p ./bin
 
 compile: reset
