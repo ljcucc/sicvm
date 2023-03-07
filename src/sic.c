@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include "sic.h"
 
-/*	a,b,c, i, j, k: general use. 
+/*	a,b,c,i,j,k: general use.
+      a,i,j using for ST() and LD().
+      b,k,l using for opseek.
     rs: for registers A, indeX, Linkage, StatusWord
     iflags: instrction flags
 */
@@ -18,21 +20,24 @@
 #define SW_LTH (1<<2)
 
 #define ST(addr, val) { for(a=val, i=3; i--; s->ram[addr+i]=0xFF&a,a>>=8); }
-#define LD(addr)      ({ for(a=0, i=3; i--; a=(s->ram[addr+i] << (i<<3))); a;})
+#define LD(addr)      LDn(addr, 3) 
+#define LDn(addr, n)  ({ for(a=0, i=n, j=0; i--; a=(s->ram[addr+j++] << (i<<3))); a;})
+#define disp LDn(pc+1, 2)
+
 #define opseek (disp & 1<<0xF)?LD(disp+RX):LD(disp)
 #define COMP(r)    a=opseek; RSW=(a>r&SW_GTH)|(a<r&SW_LTH)|(a==r&SW_EQL);  
 
 int sic_eval(Sic *s)
 {
-  Uint8 opcode, disp, iflags=0, i, j, k;
+  Uint8 opcode, iflags=0, i, j, k;
   Uint16 pc = s->pc;
   Uint32 a, b, c, rs[0xF];
-    puts("vm start");
 
   for (;;)
   {
     opcode = (s->ram[pc] & 0xFC); /* only looking for valid opcode for sicxe  */
-    disp = (s->ram[pc + 1] << 8) | s->ram[pc + 2];
+    // disp = (s->ram[pc + 1] << 8) | s->ram[pc + 2];
+    // disp = LDn(pc+1, 2);
     iflags |= (disp >> 12);
 
     // printf("pc:%04x, op:%02x, disp:%04x\n", pc, opcode, disp);
@@ -42,14 +47,14 @@ int sic_eval(Sic *s)
     case 0x00: /* LDA: 00 */
     case 0x04: /* LDX: 01 */
     case 0x08: /* LDL: 10 */
-      printf("rLD;");
+      // printf("rLD;");
       rs[0x0F & opcode >> 2] = opseek;
       break;
 
     case 0x0C: /* STA: 11 + 01 = 00 */
     case 0x10: /* STX: 00 + 01 = 01 */
     case 0x14: /* STL: 01 + 01 = 10 */
-      printf("rST;");
+      // printf("rST;");
       ST(disp, rs[(0x0F & opcode >> 2) + 1]);
       break;
 
