@@ -15,3 +15,6 @@ test: compile
 
 format:
 	clang-format -i src/*.c
+
+asm:
+	$(CC) $(C_FLAGS) -O3 -S -o $(MAIN).asm src/*.c
